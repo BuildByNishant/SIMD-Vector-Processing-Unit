@@ -1,0 +1,27 @@
+
+4. Printing statistics.
+
+=== simd_lane_alu ===
+
+   Number of wires:                393
+   Number of wire bits:           2284
+   Number of public wires:           5
+   Number of public wire bits:     132
+   Number of memories:               0
+   Number of memory bits:            0
+   Number of processes:              0
+   Number of cells:                752
+     CARRY4                         19
+     DSP48E1                         3
+     IBUF                           68
+     INV                            32
+     LUT1                            8
+     LUT2                          141
+     LUT3                           60
+     LUT4                           36
+     LUT5                           22
+     LUT6                          223
+     MUXF7                          92
+     MUXF8                          16
+     OBUF                           32
+

@@ -1,0 +1,18 @@
+
+5. Printing statistics.
+
+=== vector_regfile ===
+
+   Number of wires:                 20
+   Number of wire bits:           1603
+   Number of public wires:           9
+   Number of public wire bits:     811
+   Number of memories:               0
+   Number of memory bits:            0
+   Number of processes:              0
+   Number of cells:                866
+     BUFG                            1
+     IBUF                          267
+     OBUF                          512
+     RAM32M                         86
+
