@@ -9,12 +9,12 @@ register file, a 16-instruction vector ISA and a hardware strip-mining `LOOP` in
 
 ## Team
 
-| Member | Roll No. | GitHub | Main contribution |
-|--------|----------|--------|-------------------|
-| Mohammed Yaseen | 2401010281 | @your-handle | ISA, vector control unit, top level (`rtl/vpu_control.v`, `rtl/vpu_top.v`) |
-| Palwai Tejaswini | 2401010314 | @your-handle | Lane ALU, vector register file, ALU unit test |
-| Nishant Ranjan Singh | 2401010301 | @your-handle | Memories + host interface, assembler, workloads, system testbench, CI |
-| Sankalp M Tellur | 2401010416 | @your-handle | Synthesis estimates, figures + analysis, documentation |
+| Member | Roll No. |
+|--------|----------|
+| Mohammed Yaseen | 2401010281 |
+| Palwai Tejaswini | 2401010314 |
+| Nishant Ranjan Singh | 2401010301 |
+| Sankalp M Tellur | 2401010416 |
 
 
 ## Phase I deliverables
