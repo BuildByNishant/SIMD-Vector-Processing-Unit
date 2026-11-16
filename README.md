@@ -22,7 +22,7 @@ register file, a 16-instruction vector ISA and a hardware strip-mining `LOOP` in
 |-------------|-------|
 | IEEE report (PDF) | [`docs/report/IEEE_Report_SIMD_VPU_Phase1.pdf`](docs/report/IEEE_Report_SIMD_VPU_Phase1.pdf) |
 | IEEE report (LaTeX source) | [`docs/report/latex/`](docs/report/latex/) |
-| Prototype video | **VIDEO LINK HERE** |
+| Prototype video | [`Google Drive Link`](https://drive.google.com/drive/folders/1ta-me6U4gf9heQOJn9Y5u-gFhXVNLl5k?usp=drive_link) |
 | Prototype (RTL, testbenches, assembler, scripts) | `rtl/`, `tb/`, `asm/`, `scripts/` |
 
 ## Repository layout
@@ -33,7 +33,7 @@ asm/       assembler.py, vadd.asm  saxpy.asm  threshold.asm  opcover.asm, hex/ (
 scripts/   run_all.sh  demo.sh  make_waveform.sh  make_figures.py  synth_yosys.sh
 results/   results.csv  speedup.csv  lane_alu_test.log  sim.log
 synth/     preliminary Yosys resource reports
-docs/      report/ (PDF + LaTeX), figures/, ISA.md, CONTRIBUTION_MATRIX.md, TEAM_PLAN.md, VIDEO_SCRIPT.md
+docs/      report/ (PDF + LaTeX), figures/, ISA.md
 .github/   CI workflow (runs all simulations on every push)
 ```
 
