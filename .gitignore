@@ -1,4 +1,27 @@
+# Generated simulation outputs
 build/
 *.vcd
+
+# Python environments and caches
+.venv/
+venv/
+env/
 __pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+
+# Editor and operating-system files
 .DS_Store
+.idea/
+.vscode/
+*.swp
+*~

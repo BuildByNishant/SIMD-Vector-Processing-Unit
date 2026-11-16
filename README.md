@@ -1,11 +1,24 @@
-# SIMD Vector Processing Unit in Verilog
+# SIMD Vector Processing Unit
 
 **Design and Verification of a Parameterized SIMD Vector Processing Unit in Verilog**
-Modern Computer Architecture (CSA-222) – B.Tech (CS&AI) – Phase I submission
+Modern Computer Architecture (CSA-222) – MCA project demonstration
 
 A parameterized SIMD Vector Processing Unit (VPU) with `LANES` parallel 32-bit ALUs, an 8-entry vector
 register file, a 16-instruction vector ISA and a hardware strip-mining `LOOP` instruction.
 `LANES = 1` is the scalar baseline; 1, 2, 4, 8 and 16 lanes are verified in simulation.
+
+The repository also includes a polished local web dashboard for exploring the architecture, running the
+real Icarus Verilog testbench, comparing measured performance and inspecting generated synthesis and
+waveform artifacts.
+
+## Highlights
+
+- Parameterized 1, 2, 4, 8 and 16-lane SIMD datapath.
+- Fixed-width 32-bit vector ISA with 16 opcodes and hardware strip-mining.
+- Four verified workloads: VADD, SAXPY, Threshold and OPCOVER.
+- 20 passing system configurations and 19 passing lane-ALU corner cases.
+- Up to 15.29x measured cycle speedup at 16 lanes over the scalar baseline.
+- Interactive local dashboard backed by real repository results and allowlisted tool execution.
 
 ## Team
 
@@ -34,6 +47,7 @@ scripts/   run_all.sh  demo.sh  make_waveform.sh  make_figures.py  synth_yosys.s
 results/   results.csv  speedup.csv  lane_alu_test.log  sim.log
 synth/     preliminary Yosys resource reports
 docs/      report/ (PDF + LaTeX), figures/, ISA.md
+web/       FastAPI backend and responsive local engineering dashboard
 .github/   CI workflow (runs all simulations on every push)
 ```
 
@@ -45,6 +59,9 @@ bash scripts/demo.sh vadd     # step-by-step demo: assemble, run on 1/4/8 lanes,
 bash scripts/make_waveform.sh # writes build/vadd_L4.vcd and regenerates figures (open VCD in GTKWave)
 bash scripts/synth_yosys.sh   # preliminary Xilinx 7-series estimates for the datapath blocks
 ```
+
+For the interactive demonstration, install the small web dependency set and run `make web`; complete
+instructions are provided in [Local web dashboard](#local-web-dashboard).
 
 ## Phase I results (simulation, cycles)
 | Workload | 1 lane | 2 | 4 | 8 | 16 |
@@ -61,3 +78,43 @@ All 20 system simulations and 19 lane-ALU corner cases pass. Results assume an i
 - [x] Vector ISA, RTL, assembler, directed + system testbenches, fault-injection check, CI
 - [x] Scalar-vs-SIMD cycle comparison, preliminary Yosys resource estimates
 - [ ] Phase II: Vivado utilization + Fmax, banked BRAM memory, masking / sub-word elements, more kernels
+
+## Local web dashboard
+
+The `web/` directory contains a local FastAPI application and a dependency-free frontend for presenting and operating the project. It reads the repository's measured CSV data, synthesis reports, logs, figures, and VCD artifacts. The Simulation Lab invokes the existing assembler and testbench with an allowlisted workload and lane count; it never accepts an arbitrary command from the browser.
+
+### Setup
+
+Prerequisites are Python 3, Icarus Verilog (`iverilog` and `vvp`), and the tools already listed above. Yosys is optional unless you want to regenerate synthesis reports.
+
+```bash
+python3 -m venv .venv
+.venv/bin/pip install -r web/requirements.txt
+```
+
+### Launch
+
+```bash
+make web
+```
+
+Open [http://127.0.0.1:8000](http://127.0.0.1:8000). Keep this process running while using the dashboard.
+
+The pages provide:
+
+- Overview metrics parsed from `results/` and `synth/`.
+- An interactive RTL-accurate architecture view for 1, 2, 4, 8, and 16 lanes.
+- Real workload/lane simulation with captured compiler and testbench output.
+- Measured cycles and speedup charts from `results/results.csv`.
+- Stored Yosys resource summaries and actual synthesis logs.
+- Generated figures, raw VCD waveforms, reports, and result downloads.
+
+### Verify from the terminal
+
+```bash
+make sim                 # 19 lane-ALU cases + 20 system configurations
+make wave                # regenerate build/vadd_L4.vcd and report figures
+make figures             # regenerate charts from current measured results
+```
+
+`make synth` requires Yosys. If it is unavailable, the dashboard reports the real dependency error and continues to show the existing stored `stat_*.txt` resource estimates without presenting them as a new synthesis run.

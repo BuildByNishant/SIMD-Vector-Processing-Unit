@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Local simulation and performance dashboard for the SIMD Vector Processing Unit">
+  <title>SIMD Vector Processing Unit</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="ambient ambient-a"></div><div class="ambient ambient-b"></div>
+  <aside class="sidebar">
+    <div class="brand"><div class="brand-mark">V</div><div><strong>SIMD VPU</strong><span>Engineering Console</span></div></div>
+    <nav id="nav" aria-label="Primary navigation">
+      <a href="#overview" data-route="overview"><span>01</span> Overview</a>
+      <a href="#architecture" data-route="architecture"><span>02</span> Architecture</a>
+      <a href="#simulation" data-route="simulation"><span>03</span> Simulation Lab</a>
+      <a href="#performance" data-route="performance"><span>04</span> Performance</a>
+      <a href="#synthesis" data-route="synthesis"><span>05</span> Synthesis</a>
+      <a href="#results" data-route="results"><span>06</span> Results</a>
+    </nav>
+    <div class="sidebar-foot"><i class="status-dot"></i><span>Local toolchain</span><small id="clock">—</small></div>
+  </aside>
+  <main>
+    <header><button id="menu" aria-label="Toggle navigation">☰</button><div><p class="eyebrow">Hardware acceleration / MCA project</p><h1 id="page-title">System overview</h1></div><div class="header-chip"><span>ISA</span><strong>32-bit / 16 opcodes</strong></div></header>
+    <div id="app" aria-live="polite"><div class="loading"><div class="spinner"></div>Reading project data…</div></div>
+  </main>
+  <div id="toast" role="status"></div>
+  <script src="/app.js"></script>
+</body>
+</html>
+
