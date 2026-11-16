@@ -2,6 +2,9 @@
 build/
 *.vcd
 
+# Generated synthesis outputs (created by synth_yosys.sh / make synth)
+synth/
+
 # Python environments and caches
 .venv/
 venv/

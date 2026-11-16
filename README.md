@@ -63,6 +63,27 @@ bash scripts/synth_yosys.sh   # preliminary Xilinx 7-series estimates for the da
 For the interactive demonstration, install the small web dependency set and run `make web`; complete
 instructions are provided in [Local web dashboard](#local-web-dashboard).
 
+## Viewing Waveforms in GTKWave
+
+After running `bash scripts/make_waveform.sh` (or `make wave`), a VCD file is generated at `build/vadd_L4.vcd`.
+
+**Open VCD only:**
+```bash
+gtkwave build/vadd_L4.vcd
+```
+
+**Open VCD with a saved signal layout (`.gtkw` savefile):**
+```bash
+gtkwave build/vadd_L4.vcd build/vadd_L4.gtkw
+```
+
+The `.gtkw` savefile restores your previously saved signal selection, zoom level, and markers automatically.
+
+> **Install GTKWave on macOS:**
+> ```bash
+> brew install --cask gtkwave
+> ```
+
 ## Phase I results (simulation, cycles)
 | Workload | 1 lane | 2 | 4 | 8 | 16 |
 |----------|-------:|--:|--:|--:|---:|
