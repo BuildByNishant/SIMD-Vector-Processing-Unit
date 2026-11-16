@@ -5,4 +5,8 @@ cd "$(dirname "$0")/.."
 mkdir -p build
 iverilog -g2012 -P tb_vpu_top.LANES=4 -o build/tb_wave tb/tb_vpu_top.v rtl/*.v
 vvp build/tb_wave +WL=0 +HEX=asm/hex/vadd.hex +VCD=build/vadd_L4.vcd | grep RESULT
-python3 scripts/make_figures.py
+PYTHON_BIN="${PYTHON_BIN:-python3}"
+if [ -x .venv/bin/python ]; then
+  PYTHON_BIN=.venv/bin/python
+fi
+"$PYTHON_BIN" scripts/make_figures.py

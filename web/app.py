@@ -26,6 +26,7 @@ LANES = (1, 2, 4, 8, 16)
 WORKLOADS = {"vadd": 0, "saxpy": 1, "threshold": 2, "opcover": 3}
 ARTIFACT_ROOTS = {"results": ROOT / "results", "synth": ROOT / "synth", "build": ROOT / "build", "figures": ROOT / "docs" / "figures"}
 RUN_LOCK = asyncio.Lock()
+ACTIVE_JOB: str | None = None
 
 app = FastAPI(title="SIMD Vector Processing Unit", version="1.0.0")
 
@@ -80,6 +81,8 @@ def parse_synthesis_file(path: Path) -> dict[str, Any]:
     text = read_text(path)
     module = re.search(r"===\s+([^=\n]+?)\s+===", text)
     total = re.search(r"Number of cells:\s+(\d+)", text)
+    if not total:
+        total = re.search(r"^\s*(\d+)\s+cells\s*$", text, re.MULTILINE)
     cells = {name: int(value) for name, value in CELL_RE.findall(text)}
     return {
         "name": path.stem.replace("stat_", ""),
@@ -155,6 +158,7 @@ def status() -> dict[str, Any]:
         "system_tests": len(rows),
         "lane_tests": lane_test,
         "updated_at": newest.stat().st_mtime if newest.exists() else None,
+        "command": {"busy": RUN_LOCK.locked(), "active": ACTIVE_JOB},
         "architecture": architecture_data(),
     }
 
@@ -212,23 +216,26 @@ async def execute(argv: list[str], timeout: int = 180) -> dict[str, Any]:
 
 @app.post("/api/simulate")
 async def simulate(req: SimulationRequest) -> dict[str, Any]:
+    global ACTIVE_JOB
     workload = req.workload.lower()
     if workload not in WORKLOADS or req.lanes not in LANES:
         raise HTTPException(400, "Unsupported workload or lane count")
-    if RUN_LOCK.locked():
-        raise HTTPException(409, "Another project command is already running")
     async with RUN_LOCK:
-        steps = [
-            [sys.executable, "asm/assembler.py", f"asm/{workload}.asm", f"asm/hex/{workload}.hex"],
-            ["iverilog", "-g2012", "-P", f"tb_vpu_top.LANES={req.lanes}", "-o", f"build/web_tb_{req.lanes}", "tb/tb_vpu_top.v", *[str(path.relative_to(ROOT)) for path in sorted((ROOT / "rtl").glob("*.v"))]],
-            ["vvp", f"build/web_tb_{req.lanes}", f"+WL={WORKLOADS[workload]}", f"+HEX=asm/hex/{workload}.hex", "+VERBOSE"],
-        ]
-        results = []
-        for argv in steps:
-            result = await execute(argv, 90)
-            results.append(result)
-            if result["exit_code"] != 0:
-                break
+        ACTIVE_JOB = f"{workload.upper()} simulation ({req.lanes} lanes)"
+        try:
+            steps = [
+                [sys.executable, "asm/assembler.py", f"asm/{workload}.asm", f"asm/hex/{workload}.hex"],
+                ["iverilog", "-g2012", "-P", f"tb_vpu_top.LANES={req.lanes}", "-o", f"build/web_tb_{req.lanes}", "tb/tb_vpu_top.v", *[str(path.relative_to(ROOT)) for path in sorted((ROOT / "rtl").glob("*.v"))]],
+                ["vvp", f"build/web_tb_{req.lanes}", f"+WL={WORKLOADS[workload]}", f"+HEX=asm/hex/{workload}.hex", "+VERBOSE"],
+            ]
+            results = []
+            for argv in steps:
+                result = await execute(argv, 90)
+                results.append(result)
+                if result["exit_code"] != 0:
+                    break
+        finally:
+            ACTIVE_JOB = None
     log = "\n\n".join(f"$ {item['command']}\n{item['output']}" for item in results)
     match = re.search(r"RESULT,([^,]+),(\d+),(\d+),(\d+),(\d+)", log)
     parsed = None
@@ -240,6 +247,7 @@ async def simulate(req: SimulationRequest) -> dict[str, Any]:
 
 @app.post("/api/action")
 async def action(req: ActionRequest) -> dict[str, Any]:
+    global ACTIVE_JOB
     commands = {
         "sim": (["make", "sim"], 240),
         "wave": (["make", "wave"], 180),
@@ -248,11 +256,13 @@ async def action(req: ActionRequest) -> dict[str, Any]:
     }
     if req.action not in commands:
         raise HTTPException(400, "Unsupported action")
-    if RUN_LOCK.locked():
-        raise HTTPException(409, "Another project command is already running")
     argv, timeout = commands[req.action]
     async with RUN_LOCK:
-        result = await execute(argv, timeout)
+        ACTIVE_JOB = f"make {req.action}"
+        try:
+            result = await execute(argv, timeout)
+        finally:
+            ACTIVE_JOB = None
     return {"status": "PASS" if result["exit_code"] == 0 else "FAIL", **result}
 
 

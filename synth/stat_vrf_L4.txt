@@ -3,16 +3,17 @@
 
 === vector_regfile ===
 
-   Number of wires:                 20
-   Number of wire bits:            835
-   Number of public wires:           9
-   Number of public wire bits:     427
-   Number of memories:               0
-   Number of memory bits:            0
-   Number of processes:              0
-   Number of cells:                440
-     BUFG                            1
-     IBUF                          139
-     OBUF                          256
-     RAM32M                         44
+        +----------Local Count, excluding submodules.
+        | 
+      500 wires
+      887 wire bits
+        8 public wires
+      395 public wire bits
+        8 ports
+      395 port bits
+      440 cells
+        1   BUFG
+      139   IBUF
+      256   OBUF
+       44   RAM32M
 

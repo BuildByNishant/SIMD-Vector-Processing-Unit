@@ -1,11 +1,19 @@
 #!/usr/bin/env python3
 """Generate report figures: waveform (from VCD), speed-up plots and block diagram."""
 import csv, re, sys, os
+
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+MPL_CACHE = os.path.join(ROOT, "build", ".matplotlib")
+XDG_CACHE = os.path.join(ROOT, "build", ".cache")
+os.makedirs(MPL_CACHE, exist_ok=True)
+os.makedirs(XDG_CACHE, exist_ok=True)
+os.environ.setdefault("MPLCONFIGDIR", MPL_CACHE)
+os.environ.setdefault("XDG_CACHE_HOME", XDG_CACHE)
+
 import matplotlib; matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.patches import FancyBboxPatch, FancyArrowPatch, Polygon
 
-ROOT = os.path.join(os.path.dirname(__file__), "..")
 FIG  = os.path.join(ROOT, "docs", "figures")
 os.makedirs(FIG, exist_ok=True)
 plt.rcParams.update({"font.family": "serif", "font.size": 8})

@@ -118,3 +118,9 @@ make figures             # regenerate charts from current measured results
 ```
 
 `make synth` requires Yosys. If it is unavailable, the dashboard reports the real dependency error and continues to show the existing stored `stat_*.txt` resource estimates without presenting them as a new synthesis run.
+
+### Troubleshooting
+
+- If `make wave` reports `No module named 'matplotlib'`, rerun `.venv/bin/pip install -r web/requirements.txt`. Figure generation automatically uses the project virtual environment when it exists.
+- On macOS, install Yosys with `brew install yosys` before running `make synth`.
+- Simulation and Make operations are serialized by the local backend. If requests arrive together, they wait and run safely in order rather than modifying shared build artifacts concurrently.
