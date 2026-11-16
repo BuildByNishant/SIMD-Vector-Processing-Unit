@@ -1,0 +1,2 @@
+LANE_ALU_TEST tests=19 errors=0 PASS
+tb/tb_lane_alu.v:42: $finish called at 19000 (1ps)
