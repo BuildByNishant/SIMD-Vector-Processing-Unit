@@ -10,6 +10,7 @@
 \usepackage{microtype}
 \usepackage{textcomp}
 \usepackage{url}
+\usepackage{float}
 
 \hyphenation{multi-plier look-ahead}
 
@@ -28,7 +29,7 @@ Mohammed Yaseen & Palwai Tejaswini & Nishant Ranjan Singh & Sankalp M Tellur\\
 \maketitle
 
 \begin{abstract}
-Data-level parallelism (DLP) is the foundation of modern vector, multimedia and AI hardware, yet it is rarely taught through a complete, verified RTL implementation. This paper presents the design of a small, parameterized SIMD Vector Processing Unit (VPU) written in synthesizable Verilog. The unit has a compile-time configurable number of 32-bit lanes (1 to 16 tested), an 8-entry vector register file, a 16-instruction vector ISA with vector load/store, broadcast, arithmetic/logic, shift, multiply and compare operations, and a hardware strip-mining loop instruction. A one-lane instance of the same RTL serves as the scalar baseline. In Phase~I we implemented the complete prototype, a two-pass assembler and a self-checking testbench suite. Four workloads (vector add, SAXPY, thresholding and an all-opcode coverage kernel) executed correctly on 1, 2, 4, 8 and 16 lanes with zero mismatches in 20 system simulations and 19 directed lane-ALU tests. Measured speed-up over the scalar baseline is 3.93--3.96$\times$ on four lanes, 7.67--7.83$\times$ on eight lanes and 14.6--15.3$\times$ on sixteen lanes. Preliminary Yosys synthesis estimates for the datapath are reported; Vivado timing and FPGA results are planned for Phase~II.
+This paper presents the design and evaluation of a parameterized SIMD Vector Processing Unit (VPU) implemented in Verilog. The VPU supports a configurable 1--16 lane count, eight vector registers, a 16-opcode vector instruction set and a strip-mining loop instruction. The same one-lane configuration provides the scalar cycle-count baseline. Four workloads were simulated at five lane counts, giving 20 saved system runs with zero output errors; a separate lane-ALU test records 19 passing directed cases. For vector addition, the four-lane configuration takes 81 cycles compared with 321 cycles for one lane, a measured cycle-count speed-up of 3.96$\times$. Saved Yosys reports provide preliminary mapping statistics for selected modules only. No top-level FPGA implementation or maximum-frequency measurement is available, so hardware timing and whole-device utilization are not claimed.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -39,9 +40,9 @@ SIMD, vector processor, data-level parallelism, Verilog HDL, RTL verification, F
 \section{Introduction}
 Single Instruction, Multiple Data (SIMD) execution applies one instruction to several data elements at once and is the most common way processors exploit data-level parallelism~\cite{flynn1966}. It appears in historic vector supercomputers~\cite{russell1978}, in subword-parallel multimedia extensions~\cite{peleg1996,lee1996}, in contemporary vector ISAs such as ARM SVE~\cite{stephens2017} and the RISC-V Vector extension~\cite{rvv2021}, and in the tensor and matrix engines used for AI workloads. Understanding SIMD therefore connects directly to the course topics on instruction-level and data-level parallelism, memory systems and modern AI hardware.
 
-This project designs, verifies and evaluates a compact SIMD Vector Processing Unit in Verilog. The prototype implements a vector register file, parallel ALUs, vector control, vector ADD/SUB/AND/OR/compare operations, optional shifts and multiplication, scalar-versus-SIMD cycle measurements, and preliminary resource estimates.
+This project implements a compact SIMD Vector Processing Unit in Verilog with a vector register file, lane-parallel ALUs, vector control, arithmetic and logical instructions, vector memory operations and a hardware loop. The evaluation compares saved cycle counts across lane counts and records selected-module Yosys mapping statistics.
 
-The main contributions of the work reported here are: (i)~a lane-parameterized VPU RTL design with a small but complete vector ISA; (ii)~a hardware strip-mining loop mechanism that lets one binary run unchanged on any lane count; (iii)~a tool flow consisting of an assembler, self-checking testbenches and automated scripts; (iv)~measured cycle counts and speed-ups for four workloads; and (v)~preliminary FPGA-oriented resource estimates.
+The contributions are: (i)~lane-parameterized VPU RTL with a defined vector ISA; (ii)~a strip-mining loop that advances by the configured lane count; (iii)~an assembler, self-checking testbenches and automation scripts; (iv)~saved cycle-count and speed-up comparisons for four workloads; and (v)~preliminary Yosys mapping reports for selected modules.
 
 %=====================================================================
 \section{Literature Review}
@@ -124,16 +125,16 @@ The ISA has sixteen opcodes and a single 32-bit format: opcode [31:28], destinat
 Each lane is an independent combinational 32-bit ALU implemented in \texttt{simd\_lane\_alu}. It implements the ten arithmetic, logic, shift, multiply and compare operations of Table~\ref{tab:isa}. Multiplication keeps the low 32 bits of the product, matching wrap-around integer semantics. Because lanes share no state, adding lanes does not lengthen the critical path inside a lane, which is the basis of the scalability observed in Section~\ref{sec:results}.
 
 \subsection{Vector register file and memories}
-The register file holds eight vector registers of $\mathit{LANES}\times 32$ bits with two asynchronous read ports and one synchronous write port. The data memory exposes a \textit{LANES}-word-wide port, so one VLD or VST moves a whole vector per cycle, plus a one-word host port used to load operands and read back results. The instruction memory has a host programming port, so the design is fully loadable and observable from outside, which is also required for meaningful synthesis. The current memories are behavioural models with ideal bandwidth; mapping them onto banked block RAM is planned for Phase~II.
+The register file holds eight vector registers of $\mathit{LANES}\times 32$ bits with two asynchronous read ports and one synchronous write port. The data memory exposes a \textit{LANES}-word-wide port, so one VLD or VST moves a vector per cycle, plus a one-word host port for loading operands and reading results. The instruction memory has a host programming port. Both memories are behavioral models with ideal bandwidth; they are not evidence of a physical block-RAM implementation. Memory timing and bandwidth stalls are outside the current model.
 
 \subsection{Strip-mining loop control}
 A conventional scalar loop over $N$ elements would need a counter, a compare and a branch. We instead provide \textit{LOOP target, limit}. Each execution adds \textit{LANES} to \textit{ptr}; if the new value is below \textit{limit} the program counter jumps to \textit{target}, otherwise execution falls through and \textit{ptr} is cleared. All VLD/VST addresses are formed as \textit{ptr} + immediate. Consequently the same program binary, which contains the element count $N$ but not the lane count, runs correctly on any configuration whose lane count divides $N$. This mirrors the lane-agnostic style of SVE and RVV~\cite{stephens2017,rvv2021}.
 
 \subsection{Tool flow and verification}
-The RTL is written in synthesizable Verilog-2005~\cite{verilog2005} and verified with Icarus Verilog. A directed lane-ALU testbench checks 19 corner cases, including overflow wraparound, shift amounts of 31 and 32, signed comparisons of negative values, and 32-bit multiply overflow. A self-checking system testbench loads programs and operands through the host ports, runs each workload to HALT, and compares each output word against a reference computed in the testbench. To confirm that the checks are not vacuous, three faults were deliberately injected into the ALU (an off-by-one addition, swapped subtraction operands and unsigned instead of signed comparison); the system testbench detected all three.
+The RTL is written in Verilog-2005~\cite{verilog2005} and simulated with Icarus Verilog. The directed lane-ALU testbench records 19 passing cases, including wraparound arithmetic, shift boundary values, signed comparison and truncated multiplication. The self-checking system testbench loads programs and operands through host ports, runs each workload to HALT and compares output words against testbench reference values. The checked-in automated results contain four workloads at five lane counts, with zero errors in all 20 configurations. The saved evidence includes simulator logs and a GTKWave-compatible VCD for the four-lane vector-add run.
 
 %=====================================================================
-\section{Preliminary Results and Discussion}
+\section{Results and Discussion}
 \label{sec:results}
 \subsection{Functional verification}
 Four workloads were run on each of five lane counts (1, 2, 4, 8, 16), giving 20 system simulations. They are \textit{vadd} ($C=A+B$), \textit{saxpy} ($C=3A+B$), \textit{threshold} ($C=A$ if $A<1000$, else 0) with $N=64$, and \textit{opcover}, which exercises SUB, OR, XOR, SLL, SRL and CMPEQ with $N=16$. All runs finished with zero mismatches. Fig.~\ref{fig:wave} shows a waveform of the four-lane \textit{vadd} run: in cycle 2 the four lanes add their operands in parallel, e.g., \texttt{0xE77A08CE} + \texttt{0x96B1C02D} = \texttt{0x7E2BC8FB} in lane~0, and the result is stored by the following VST. At the end of the first iteration LOOP advances \textit{ptr} from 0 to 4 and returns the program counter to 0.
@@ -182,43 +183,39 @@ which approaches $L$ for large $kN$, as in Amdahl's law~\cite{amdahl1967} with t
 \label{fig:speedup}
 \end{figure}
 
-\subsection{Preliminary resource estimates}
-Because Vivado results are scheduled for Phase~II, we used Yosys with Xilinx 7-series technology mapping to obtain first estimates of the datapath blocks (Table~\ref{tab:synth}). One lane ALU needs about 490 LUTs and three DSP48E1 blocks, which includes the 32-bit multiplier path and two barrel shifters; the vector register file maps to distributed RAM (RAM32M) and grows linearly with the lane count. A four-lane datapath therefore needs roughly $4\times 490$ LUTs and 12 DSP blocks plus 44 RAM32M cells, which is expected to fit on a typical FPGA development board (to be confirmed with Vivado). These figures are pre-place-and-route estimates and will be replaced by Vivado utilization and maximum-frequency results.
+\subsection{Synthesis results}
+The saved Yosys runs use Xilinx 7-series mapping on separate RTL modules. The lane-ALU report contains 503 LUT cells in total (the sum of LUT2--LUT6), three DSP48E1 cells, 19 CARRY4 cells, 30 MUXF7 cells and 15 MUXF8 cells. The control report contains six LUT4 cells. Separate vector-register-file reports contain 12, 22, 44 and 86 RAM32M cells for 1, 2, 4 and 8 lanes, respectively. These module results are summarized in Table~\ref{tab:synth}; they are not additive top-level VPU utilization because the ALUs, memories, host logic and interconnect were not synthesized together. The standalone module statistics also include mapping details such as I/O buffers and are not a placed design-level utilization report. The saved flow does not report a target device, timing constraints, place-and-route utilization or maximum frequency. Accordingly, no FPGA fit or clock-rate conclusion is made.
 
-\begin{table}[!t]
-\caption{Preliminary Yosys (Xilinx 7-Series) Estimates}
+\begin{table}[H]
+\caption{Saved Yosys Statistics for Selected RTL Modules}
 \label{tab:synth}
 \centering
 \small
-\begin{tabular}{@{}l c c >{\raggedright\arraybackslash}p{2.9cm}@{}}
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}p{2.1cm} c c c p{2.7cm}@{}}
 \toprule
-\textbf{Block} & \textbf{LUTs} & \textbf{DSP48E1} & \textbf{Other}\\
+\textbf{Module} & \textbf{LUT} & \textbf{DSP48E1} & \textbf{RAM32M} & \textbf{Other mapped cells}\\
 \midrule
-Lane ALU ($\times 1$) & 490 & 3 & 19 CARRY4, 108 MUXF7/F8\\
-Control unit & 6 & 0 & ---\\
-Vector RF, 1 lane  & --- & 0 & 12 RAM32M\\
-Vector RF, 2 lanes & --- & 0 & 22 RAM32M\\
-Vector RF, 4 lanes & --- & 0 & 44 RAM32M\\
-Vector RF, 8 lanes & --- & 0 & 86 RAM32M\\
+Lane ALU & 503 & 3 & --- & 19 CARRY4; 30 MUXF7; 15 MUXF8\\
+Control & 6 & 0 & --- & LUT4\\
+Vector RF, 1 lane & --- & 0 & 12 & ---\\
+Vector RF, 2 lanes & --- & 0 & 22 & ---\\
+Vector RF, 4 lanes & --- & 0 & 44 & ---\\
+Vector RF, 8 lanes & --- & 0 & 86 & ---\\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\subsection{Plan for Phase II}
-\begin{itemize}
-\item Synthesize with Vivado; report LUT/FF/DSP/BRAM utilization and maximum frequency for 1, 4 and 8 lanes, and deploy on an FPGA board if available.
-\item Replace the behavioural memories by banked block RAM and study memory bandwidth limits.
-\item Share the multiplier and shifter between operations to reduce lane area.
-\item Add a vector-length/mask register, sub-word element sizes (8/16/32 bit) and a reduction instruction.
-\item Add dot-product, image-brightness and 1-D convolution kernels and compare against a hand-written scalar RISC-V-style loop.
-\end{itemize}
+\subsection{Limitations}
+The implementation is a single-cycle educational datapath with an ideal vector-wide behavioral memory model. It is not a five-stage pipelined CPU and has no hazard detection or forwarding, cache or TLB, multicore coherence, GPU SIMT, vector masks or sub-word elements. The cycle comparisons therefore describe this simulator model and do not predict wall-clock latency on an FPGA. The project brief includes resource utilization and maximum-frequency analysis; the current saved synthesis covers selected modules only, and maximum frequency remains unmeasured.
 
 %=====================================================================
 \section{Individual Contributions}
-Member labels M1--M4 follow the title-page order. Table~\ref{tab:matrix} summarizes the Phase~I contribution matrix; $\bullet$ marks a task lead and $\circ$ marks a supporting member or reviewer.
+Member labels M1--M4 follow the title-page order. Table~\ref{tab:matrix} records the documented contributions; $\bullet$ marks primary responsibility and $\circ$ marks supporting work or review.
 
-\begin{table}[!t]
-\caption{Phase I Contribution Matrix ($\bullet$ = lead, $\circ$ = support)}
+\begin{table}[H]
+\caption{Contribution Matrix ($\bullet$ = primary responsibility, $\circ$ = support or review)}
 \label{tab:matrix}
 \centering
 \scriptsize
@@ -234,7 +231,7 @@ Lane ALU and directed unit test           & $\circ$   & $\bullet$ &           & 
 Vector register file                      &           & $\bullet$ & $\circ$   &           \\
 Memories and host interface               & $\circ$   &           & $\bullet$ &           \\
 Assembler and workloads                   &           &           & $\bullet$ & $\circ$   \\
-System testbench, mutation test, CI        & $\circ$   & $\circ$   & $\bullet$ &           \\
+System testbench and CI        & $\circ$   & $\circ$   & $\bullet$ &           \\
 Synthesis estimates                       &           & $\circ$   &           & $\bullet$ \\
 Figures and result analysis                & $\circ$   &           & $\circ$   & $\bullet$ \\
 IEEE report (own sections)                 & $\bullet$ & $\bullet$ & $\bullet$ & $\bullet$ \\
@@ -244,11 +241,11 @@ Repository, README, docs                   & $\circ$   &           & $\circ$   &
 \end{tabular}
 \end{table}
 
-M1 defined the instruction set and implemented the control unit and top level; M2 implemented the lane ALU, vector register file, and ALU unit test; M3 implemented the memories and host interface, assembler and workloads, and system-level verification flow; and M4 produced the synthesis estimates, result figures and analysis, and project documentation. All four members contributed to the report and demonstration video.
+M1 defined the instruction set and implemented the control unit and top level; M2 implemented the lane ALU, vector register file and directed ALU test; M3 implemented the memories and host interface, assembler, workloads and system-level verification flow; and M4 generated the synthesis estimates, result figures and analysis, and project documentation. The report and prototype demonstration include contributions from all four members.
 
 %=====================================================================
 \section{Conclusion}
-Phase~I delivered a complete, parameterized SIMD VPU prototype in Verilog with an ISA, assembler and a self-checking verification environment. Four workloads run correctly on 1 to 16 lanes and the measured speed-up closely follows the analytical model, reaching 15.3$\times$ on sixteen lanes for vector add. Phase~II will add FPGA timing and utilization results, a realistic banked memory and further kernels and features.
+The project delivers a parameterized Verilog SIMD VPU, a defined vector ISA, an assembler, self-checking testbenches and saved simulation and synthesis evidence. Across four workloads and five lane counts, all 20 saved system configurations report zero errors; the directed ALU test reports 19 passing cases. Four-lane vector addition completes in 81 cycles versus 321 cycles for the one-lane baseline, a 3.96$\times$ cycle-count speed-up. The evidence demonstrates correct lane-parallel operation and increasing cycle-level throughput under the behavioral memory model. Since the saved Yosys reports cover separate modules and no FPGA timing flow is available, whole-device resource use and maximum frequency remain open measurements.
 
 \bibliographystyle{IEEEtran}
 \bibliography{references}

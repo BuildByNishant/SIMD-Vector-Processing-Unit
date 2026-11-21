@@ -1,7 +1,7 @@
 #!/bin/bash
 # Preliminary resource estimate with Yosys (Xilinx 7-series mapping) of the datapath blocks:
 #   one SIMD lane ALU, and the vector register file for LANES = 1,2,4,8.
-# Behavioural memories are excluded (they map to BRAM in Vivado - Phase II).
+# Behavioural instruction/data memories are excluded from these module-only runs.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p synth

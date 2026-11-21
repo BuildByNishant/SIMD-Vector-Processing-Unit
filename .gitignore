@@ -1,9 +1,7 @@
 # Generated simulation outputs
 build/
 *.vcd
-
-# Generated synthesis outputs (created by synth_yosys.sh / make synth)
-synth/
+!docs/evidence/*.vcd
 
 # Python environments and caches
 .venv/
@@ -21,6 +19,17 @@ htmlcov/
 .env
 .env.*
 !.env.example
+
+# Generated LaTeX build files; keep the named final PDF in docs/report/
+docs/report/latex/main.pdf
+docs/report/latex/main.aux
+docs/report/latex/main.bbl
+docs/report/latex/main.blg
+docs/report/latex/main.fdb_latexmk
+docs/report/latex/main.fls
+docs/report/latex/main.log
+docs/report/latex/main.out
+docs/report/latex/main.toc
 
 # Editor and operating-system files
 .DS_Store

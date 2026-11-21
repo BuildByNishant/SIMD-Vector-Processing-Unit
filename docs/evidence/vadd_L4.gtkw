@@ -1,0 +1,32 @@
+[*]
+[*] GTKWave Analyzer v3.4.0 (w)1999-2022 BSI
+[*] Sun Nov 15 19:17:27 2026
+[*]
+[dumpfile] "docs/evidence/vadd_L4.vcd"
+[dumpfile_mtime] "Sun Nov 15 18:45:54 2026"
+[dumpfile_size] 168465
+[savefile] "docs/evidence/vadd_L4.gtkw"
+[timestart] 0
+[size] 1333 684
+[pos] -100 -191
+*-19.720156 310000 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+[treeopen] tb_vpu_top.
+[treeopen] tb_vpu_top.dut.
+[sst_width] 255
+[signals_width] 229
+[sst_expanded] 1
+[sst_vpaned_height] 260
+@28
+tb_vpu_top.dut.clk
+tb_vpu_top.dut.rst_n
+tb_vpu_top.dut.halted
+@22
+tb_vpu_top.dut.pc[31:0]
+tb_vpu_top.dut.ptr[31:0]
+tb_vpu_top.dut.ptr_next[31:0]
+tb_vpu_top.dut.op[3:0]
+tb_vpu_top.dut.rd1[127:0]
+tb_vpu_top.dut.rd2[127:0]
+tb_vpu_top.dut.alu_out[127:0]
+[pattern_trace] 1
+[pattern_trace] 0
